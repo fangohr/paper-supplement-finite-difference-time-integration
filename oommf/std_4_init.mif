@@ -1,0 +1,39 @@
+# MIF 2.1
+
+set PI [expr {4*atan(1.)}]
+set MU0 [expr {4*$PI*1e-7}]
+
+Specify Oxs_BoxAtlas:atlas {
+  xrange {0 500E-9}
+  yrange {0 125E-9}
+  zrange {0 3e-9}
+}
+
+Specify Oxs_RectangularMesh:mesh {
+  cellsize {1e-9 1e-9 1e-9}
+  atlas :atlas
+}
+
+Specify Oxs_UniformExchange {
+  A 13E-12
+}
+
+Specify Oxs_Demag {}
+
+Specify Oxs_UZeeman:extfield0 [subst {
+  Hrange {
+    {5e6 5e6 5e6 1e3 1e3 1e3 100}
+    {1e3 1e3 1e3 0 0 0 100}
+    {0 0 0 0 0 0 1}
+  }
+}]
+
+Specify Oxs_CGEvolve:evolver {}
+
+Specify Oxs_MinDriver {
+  evolver :evolver
+  mesh :mesh
+  stopping_mxHxm {{1e-5 201} 1e-7 :expand:}
+  Ms 8e5
+  m0 {1 1 1}
+}
