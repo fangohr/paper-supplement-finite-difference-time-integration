@@ -33,7 +33,7 @@ Specify Oxs_CGEvolve:evolver {}
 Specify Oxs_MinDriver {
   evolver :evolver
   mesh :mesh
-  stopping_mxHxm {{1e-5 201} 1e-7 :expand:}
+  stopping_mxHxm {{1 201} 0.1 :expand:}
   Ms 8e5
   m0 {1 1 1}
 }
