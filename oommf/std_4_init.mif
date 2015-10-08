@@ -1,8 +1,5 @@
 # MIF 2.1
 
-set PI [expr {4*atan(1.)}]
-set MU0 [expr {4*$PI*1e-7}]
-
 Specify Oxs_BoxAtlas:atlas {
   xrange {0 500E-9}
   yrange {0 125E-9}
@@ -37,3 +34,7 @@ Specify Oxs_MinDriver {
   Ms 8e5
   m0 {1 1 1}
 }
+
+Destination archive mmArchive
+Schedule Oxs_MinDriver::Spin archive Stage 201
+Schedule DataTable archive Stage 201
