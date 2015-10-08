@@ -19,7 +19,7 @@ Specify Oxs_RectangularMesh:mesh {
 }
 
 Specify Oxs_UniformExchange {
-  A  13E-12
+  A 13E-12
 }
 
 Specify Oxs_Demag {}
@@ -34,19 +34,21 @@ Specify Oxs_RungeKuttaEvolve:evolver {
   do_precess 1
   gamma_LL 2.21e5
   alpha 0.02
-  max_timestep 0.2e-12
 }
 
 Specify Oxs_TimeDriver {
   evolver :evolver
   mesh :mesh
   stopping_time 4e-12
-  stage_iteration_limit {1 {0 500} :expand:}
-  stage_count 501
+  stage_count 501 comment {2 ns of total simulation time}
   Ms 8e5
   m0 { Oxs_FileVectorField {
     atlas :atlas
     norm  1
-    file stdprob4-start.omf
+    file std_4_init_magnetisation.omf
   } }
 }
+
+Destination archive mmArchive
+Schedule Oxs_TimeDriver::Spin archive Stage 1
+Schedule DataTable archive Stage 1
