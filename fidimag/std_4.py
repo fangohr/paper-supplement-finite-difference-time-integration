@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from micro import Sim
-from micro import FDMesh
-from micro import UniformExchange, Demag
-from micro import Zeeman, TimeZeeman
+from fidimag.micro import Sim
+from fidimag.micro import FDMesh
+from fidimag.micro import UniformExchange, Demag
+from fidimag.micro import Zeeman, TimeZeeman
 from fidimag.common.fileio import DataReader
 
 mu0 = 4 * np.pi * 1e-7
@@ -66,6 +66,6 @@ def plot():
 
 if __name__ == '__main__':
     mesh = FDMesh(nx=200, ny=50, nz=1, dx=2.5, dy=2.5, dz=3, unit_length=1e-9)
-    initialise_magnetisation(mesh)
+    initial_magnetisation(mesh)
     dynamics_field_1(mesh)
     plot()
