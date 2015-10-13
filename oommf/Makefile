@@ -15,7 +15,7 @@ std_4_init_magnetisation.omf: | $(OBJDIR)
 
 dynamics: std_4_dynamics_field_2.txt
 
-std_4_dynamics_field_2.txt:
+std_4_dynamics_field_2.txt: std_4_init_magnetisation.omf
 	oommf boxsi std_4_field_2.mif
 	@echo Extracting dynamics.
 	oommf odtcols 18 1 14 15 16 < std_4_field_2.odt > $@
