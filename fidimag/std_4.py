@@ -1,14 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from os import path
 from fidimag.micro import Sim
-from fidimag.micro import FDMesh
+from fidimag.common import CuboidMesh
 from fidimag.micro import UniformExchange, Demag
 from fidimag.micro import Zeeman, TimeZeeman
 from fidimag.common.fileio import DataReader
 
 mu0 = 4 * np.pi * 1e-7
 A = 13e-12
-
+MODULE_DIR = path.dirname(path.abspath(__file__))
+INITIAL_MAGNETISATION_FILE = path.join(MODULE_DIR, "m0.npy")
 
 def initial_magnetisation(mesh):
     sim = Sim(mesh, name='relax')
@@ -23,16 +25,17 @@ def initial_magnetisation(mesh):
     sim.add(Demag())
     sim.relax(dt=1e-13, stopping_dmdt=0.01, max_steps=5000,
               save_m_steps=100, save_vtk_steps=50)
-    np.save('m0.npy', sim.spin)
+    np.save(INITIAL_MAGNETISATION_FILE, sim.spin)
+    return sim.spin
 
 
-def dynamics_field_1(mesh):
+def dynamics_field_1(mesh, initial_magnetisation):
     sim = Sim(mesh, name='dynamics_1')
     sim.set_tols(rtol=1e-10, atol=1e-10)
     sim.alpha = 0.02
     sim.gamma = 2.211e5
     sim.Ms = 8.0e5
-    sim.set_m(np.load('m0.npy'))
+    sim.set_m(initial_magnetisation)
     sim.add(UniformExchange(A))
     sim.add(Demag())
 
@@ -65,7 +68,15 @@ def plot():
 
 
 if __name__ == '__main__':
-    mesh = FDMesh(nx=200, ny=50, nz=1, dx=2.5, dy=2.5, dz=3, unit_length=1e-9)
-    initial_magnetisation(mesh)
-    dynamics_field_1(mesh)
+    mesh = CuboidMesh(nx=200, ny=50, nz=1, dx=2.5, dy=2.5, dz=3, unit_length=1e-9)
+
+    try:
+        m0 = np.load(INITIAL_MAGNETISATION_FILE)
+    except IOError:
+        print "Couldn't find initial magnetisation at {}.".format(
+                INITIAL_MAGNETISATION_FILE)
+        print "Will run relaxation simulation."
+        m0 = initial_magnetisation(mesh)
+
+    dynamics_field_1(mesh, m0)
     plot()
