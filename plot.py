@@ -5,7 +5,7 @@ from fidimag.common.fileio import DataReader  # for convenience
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 OOMMF_DATAFILE = os.path.join(MODULE_DIR, "oommf", "std_4_dynamics_field_2.txt")
-FIDIMAG_DATAFILE = os.path.join(MODULE_DIR, "fidimag", "dynamics_1.txt")
+FIDIMAG_DATAFILE = os.path.join(MODULE_DIR, "fidimag", "dynamics_2.txt")
 
 oommf_data = np.loadtxt(OOMMF_DATAFILE)
 
