@@ -29,8 +29,8 @@ def initial_magnetisation(mesh):
     return sim.spin
 
 
-def dynamics_field_1(mesh, initial_magnetisation):
-    sim = Sim(mesh, name='dynamics_1')
+def dynamics_field_2(mesh, initial_magnetisation):
+    sim = Sim(mesh, name='dynamics_2')
     sim.set_tols(rtol=1e-10, atol=1e-10)
     sim.alpha = 0.02
     sim.gamma = 2.211e5
@@ -40,17 +40,17 @@ def dynamics_field_1(mesh, initial_magnetisation):
     sim.add(Demag())
 
     mT = 0.001 / mu0
-    zeeman = Zeeman([-24.6 * mT, 4.3 * mT, 0], name='H')
+    zeeman = Zeeman([-35.5 * mT, -6.3 * mT, 0], name='H')
     sim.add(zeeman, save_field=True)
 
-    ts = np.linspace(0, 1e-9, 201)
+    ts = np.linspace(0, 2e-9, 501)
     for t in ts:
         sim.run_until(t)
         print 'sim t=%g' % t
 
 
 def plot():
-    data = DataReader('dynamics_1.txt')
+    data = DataReader('dynamics_2.txt')
     ts = data['time'] * 1e9
     mx = data['m_x']
     my = data['m_y']
@@ -78,5 +78,5 @@ if __name__ == '__main__':
         print "Will run relaxation simulation."
         m0 = initial_magnetisation(mesh)
 
-    dynamics_field_1(mesh, m0)
+    dynamics_field_2(mesh, m0)
     plot()
