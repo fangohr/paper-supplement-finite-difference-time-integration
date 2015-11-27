@@ -1,82 +1,69 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from os import path
-from fidimag.micro import Sim
+from math import sqrt
 from fidimag.common import CuboidMesh
-from fidimag.micro import UniformExchange, Demag
-from fidimag.micro import Zeeman, TimeZeeman
 from fidimag.common.fileio import DataReader
+from fidimag.micro import Sim, Demag, UniformExchange, Zeeman, TimeZeeman
+
+MODULE_DIR = path.dirname(path.abspath(__file__))
+M0_FILE = path.join(MODULE_DIR, "m0.npy")  # initial state
 
 mu0 = 4 * np.pi * 1e-7
+mT = 1e-3 / mu0
 A = 13e-12
-MODULE_DIR = path.dirname(path.abspath(__file__))
-INITIAL_MAGNETISATION_FILE = path.join(MODULE_DIR, "m0.npy")
+Ms = 8.0e5
+alpha = 0.02
+gamma = 2.211e5
 
-def initial_magnetisation(mesh):
-    sim = Sim(mesh, name='relax')
 
-    sim.set_tols(rtol=1e-10, atol=1e-10)
-    sim.alpha = 0.5
-    sim.gamma = 2.211e5
-    sim.Ms = 8.0e5
-    sim.do_precession = False
-    sim.set_m((1, 0.25, 0.1))
+def setup_simulation(mesh, m0, simulation_name):
+    sim = Sim(mesh, name=simulation_name)
+    sim.set_m(m0)
+    sim.Ms = Ms
+    sim.alpha = alpha
+    sim.gamma = gamma
     sim.add(UniformExchange(A))
     sim.add(Demag())
-    sim.relax(dt=1e-13, stopping_dmdt=0.01, max_steps=5000,
-              save_m_steps=100, save_vtk_steps=50)
-    np.save(INITIAL_MAGNETISATION_FILE, sim.spin)
+    return sim
+
+
+def get_initial_state(mesh):
+    sim = setup_simulation(mesh, (1, 0.25, 0.1), "relaxation")
+    H0 = [Ms / sqrt(3) for _ in xrange(3)]
+    Ht = lambda t: 1 - t / 0.5e-9 if t < 0.5e-9 else 0
+    sim.add(TimeZeeman(H0, Ht))  # saturating field H0 * H(t)
+    sim.do_precession = False
+    sim.set_tols(rtol=1e-10, atol=1e-10)
+    sim.relax(stopping_dmdt=0.01, max_steps=5000)
     return sim.spin
 
 
-def dynamics_field_2(mesh, initial_magnetisation):
-    sim = Sim(mesh, name='dynamics_2')
-    sim.set_tols(rtol=1e-10, atol=1e-10)
-    sim.alpha = 0.02
-    sim.gamma = 2.211e5
-    sim.Ms = 8.0e5
-    sim.set_m(initial_magnetisation)
-    sim.add(UniformExchange(A))
-    sim.add(Demag())
-
-    mT = 0.001 / mu0
-    zeeman = Zeeman([-35.5 * mT, -6.3 * mT, 0], name='H')
-    sim.add(zeeman, save_field=True)
+def run_dynamics(mesh, initial_state, tols):
+    sim = setup_simulation(mesh, initial_state, "dyn_r{}_a{}".format(tols[0], tols[1]))
+    sim.add(Zeeman([-35.5 * mT, -6.3 * mT, 0], name='H'), save_field=True)
+    sim.set_tols(rtol=tols[0], atol=tols[1])
 
     ts = np.linspace(0, 2e-9, 501)
-    for t in ts:
+    for ti, t in enumerate(ts):
         sim.run_until(t)
-        print 'sim t=%g' % t
+        if ti % 100 == 0:
+            print 'sim t=%g' % t
 
 
-def plot():
-    data = DataReader('dynamics_2.txt')
-    ts = data['time'] * 1e9
-    mx = data['m_x']
-    my = data['m_y']
-    mz = data['m_z']
-
-    plt.plot(ts, mx, '--', label='m_fidimag', dashes=(2, 2))
-    plt.plot(ts, my, '--', label='', dashes=(2, 2))
-    plt.plot(ts, mz, '--', label='', dashes=(2, 2))
-
-    plt.title('standard problem 4')
-    plt.legend()
-    plt.xlabel('t (ns)')
-    plt.ylabel('m (1)')
-    plt.savefig('standard_problem_4.pdf')
-
-
-if __name__ == '__main__':
-    mesh = CuboidMesh(nx=200, ny=50, nz=1, dx=2.5, dy=2.5, dz=3, unit_length=1e-9)
+def run(tolerances):
+    mesh = CuboidMesh(nx=500, ny=125, nz=3, dx=1, dy=1, dz=1, unit_length=1e-9)
 
     try:
-        m0 = np.load(INITIAL_MAGNETISATION_FILE)
+        m0 = np.load(M0_FILE)
     except IOError:
-        print "Couldn't find initial magnetisation at {}.".format(
-                INITIAL_MAGNETISATION_FILE)
-        print "Will run relaxation simulation."
-        m0 = initial_magnetisation(mesh)
+        print "No initial state at {}. Running relexation.".format(M0_FILE)
+        m0 = get_initial_state(mesh)
+        np.save(M0_FILE, m0)
 
-    dynamics_field_2(mesh, m0)
-    plot()
+    run_dynamics(mesh, m0, tolerances)
+
+if __name__ == "__main__":
+    run((1e-10, 1e-10))
+    run((1e-8, 1e-8))
+    run((1e-6, 1e-6))
