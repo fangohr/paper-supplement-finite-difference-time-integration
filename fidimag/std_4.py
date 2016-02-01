@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from os import path
@@ -17,8 +18,8 @@ alpha = 0.02
 gamma = 2.211e5
 
 
-def setup_simulation(mesh, m0, simulation_name):
-    sim = Sim(mesh, name=simulation_name)
+def setup_simulation(mesh, m0, simulation_name, integrator="sundials"):
+    sim = Sim(mesh, name=simulation_name, integrator=integrator)
     sim.set_m(m0)
     sim.Ms = Ms
     sim.alpha = alpha
@@ -39,31 +40,40 @@ def get_initial_state(mesh):
     return sim.spin
 
 
-def run_dynamics(mesh, initial_state, tols):
-    sim = setup_simulation(mesh, initial_state, "dyn_r{}_a{}".format(tols[0], tols[1]))
+def run_dynamics(mesh, initial_state, integrator_settings):
+    if integrator_settings[0] == "sundials":
+        integrator, rtol, atol = integrator_settings
+        print "Simulation with sundials integrator, rtol={}, atol={}.".format(rtol, atol)
+        sim = setup_simulation(mesh, initial_state, "dyn_r{}_a{}".format(rtol, atol), integrator)
+        sim.set_tols(rtol=rtol, atol=atol)
+    else:
+        integrator, stepsize = integrator_settings
+        print "Simulation with {} integrator, stepsize={}.".format(integrator, stepsize)
+        sim = setup_simulation(mesh, initial_state, "dyn_{}_h{}".format(integrator, stepsize), integrator)
+        sim.integrator.h = stepsize
     sim.add(Zeeman([-35.5 * mT, -6.3 * mT, 0], name='H'), save_field=True)
-    sim.set_tols(rtol=tols[0], atol=tols[1])
 
     ts = np.linspace(0, 2e-9, 501)
     for ti, t in enumerate(ts):
         sim.run_until(t)
         if ti % 100 == 0:
-            print 'sim t=%g' % t
+            print "it's {} now, simulated {} s.".format(time.strftime("%d/%m/%Y %H:%M:%S"), t)
 
 
-def run(tolerances):
+def run(integrator_settings):
     mesh = CuboidMesh(nx=500, ny=125, nz=3, dx=1, dy=1, dz=1, unit_length=1e-9)
-
     try:
         m0 = np.load(M0_FILE)
     except IOError:
         print "No initial state at {}. Running relexation.".format(M0_FILE)
         m0 = get_initial_state(mesh)
         np.save(M0_FILE, m0)
-
-    run_dynamics(mesh, m0, tolerances)
+    run_dynamics(mesh, m0, integrator_settings)
 
 if __name__ == "__main__":
-    run((1e-10, 1e-10))
-    run((1e-8, 1e-8))
-    run((1e-6, 1e-6))
+    for tol in xrange(5, 11):
+        run(("sundials", tol, tol))
+    run(("euler", 1e-14))
+    run(("euler", 1e-12))
+    run(("rk4", 1e-14))
+    run(("rk4", 1e-12))
