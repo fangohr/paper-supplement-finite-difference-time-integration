@@ -31,7 +31,6 @@ Specify Oxs_FixedZeeman [subst {
 }]
 
 Specify Oxs_RungeKuttaEvolve:evolver {
-  do_precess 1
   gamma_LL 2.21e5
   alpha 0.02
 }
