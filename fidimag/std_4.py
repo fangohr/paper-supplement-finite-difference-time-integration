@@ -1,5 +1,7 @@
 import time
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from os import path
 from math import sqrt
@@ -45,7 +47,7 @@ def run_dynamics(mesh, initial_state, integrator_settings):
         integrator, rtol, atol = integrator_settings
         print "Simulation with sundials integrator, rtol={}, atol={}.".format(rtol, atol)
         sim = setup_simulation(mesh, initial_state, "dyn_r{}_a{}".format(rtol, atol), integrator)
-        sim.set_tols(rtol=rtol, atol=atol)
+        sim.set_tols(rtol=10**-rtol, atol=10**-atol)
     else:
         integrator, stepsize = integrator_settings
         print "Simulation with {} integrator, stepsize={}.".format(integrator, stepsize)
@@ -73,7 +75,5 @@ def run(integrator_settings):
 if __name__ == "__main__":
     for tol in xrange(5, 11):
         run(("sundials", tol, tol))
-    run(("euler", 1e-14))
-    run(("euler", 1e-12))
-    run(("rk4", 1e-14))
-    run(("rk4", 1e-12))
+    run(("euler", 1e-15))
+    run(("rk4", 1e-15))
