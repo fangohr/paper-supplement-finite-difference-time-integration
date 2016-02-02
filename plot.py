@@ -31,9 +31,9 @@ flbli = lambda i: lbli("fidimag", i)
 
 # showing averages
 
-fig, axes = plt.subplots((3, 2), figsize=(10, 8), sharex=True)
-axes[2].set_xlabel("time (ns)")
-axes[2].set_xlim((0, 2))
+fig, axes = plt.subplots(len(fidimag_tols), figsize=(10, 8), sharex=True)
+axes[-1].set_xlabel("time (ns)")
+axes[-1].set_xlim((0, 2))
 
 for i, tol in enumerate(fidimag_tols):
     fidimag_data = DataReader(FIDIMAG_DATAFILE.format(tol))
