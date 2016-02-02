@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from fidimag.common.fileio import DataReader  # for convenience
 
@@ -10,7 +12,7 @@ plt.style.use("ggplot")
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 OOMMF_DATAFILE = os.path.join(MODULE_DIR, "oommf", "std_4_dynamics_field_2.txt")
 FIDIMAG_DATAFILE = os.path.join(MODULE_DIR, "fidimag", "dyn_r{0}_a{0}.txt")
-fidimag_tols = (1e-6, 1e-8, 1e-10)
+fidimag_tols = xrange(5, 11)
 oommf_data = np.loadtxt(OOMMF_DATAFILE)
 
 
@@ -29,7 +31,7 @@ flbli = lambda i: lbli("fidimag", i)
 
 # showing averages
 
-fig, axes = plt.subplots(3, figsize=(10, 8), sharex=True)
+fig, axes = plt.subplots((3, 2), figsize=(10, 8), sharex=True)
 axes[2].set_xlabel("time (ns)")
 axes[2].set_xlim((0, 2))
 
@@ -44,7 +46,7 @@ for i, tol in enumerate(fidimag_tols):
     axes[i].set_ylim((-1.05, 1))
     axes[i].set_ylabel("unit magnetisation (1)")
     axes[i].legend()
-    axes[i].set_title("tol {}".format(tol))
+    axes[i].set_title("tol 1e-{}".format(tol))
 
 fig.tight_layout()
 fig.savefig("dynamics.png")
@@ -60,17 +62,11 @@ differences = [] # differences between oommf and given fidimag tol
 
 for i, tol in enumerate(fidimag_tols):
     fidimag_data = DataReader(FIDIMAG_DATAFILE.format(tol))
-    if tol == 1e-8:
-        difference = np.sqrt((oommf_data[:105, 2] - fidimag_data["m_x"]) ** 2 +
-                             (oommf_data[:105, 3] - fidimag_data["m_y"]) ** 2 +
-                             (oommf_data[:105, 4] - fidimag_data["m_z"]) ** 2)
-        #axis.plot(fidimag_data["time"] * 1e9, 2 * difference, label=str(tol))
-    else:
-        difference = np.sqrt((oommf_data[:, 2] - fidimag_data["m_x"]) ** 2 +
-                             (oommf_data[:, 3] - fidimag_data["m_y"]) ** 2 +
-                             (oommf_data[:, 4] - fidimag_data["m_z"]) ** 2)
-        differences.append(difference)
-        ax1.plot(fidimag_data["time"] * 1e9, difference, label=str(tol))
+    difference = np.sqrt((oommf_data[:, 2] - fidimag_data["m_x"]) ** 2 +
+                         (oommf_data[:, 3] - fidimag_data["m_y"]) ** 2 +
+                         (oommf_data[:, 4] - fidimag_data["m_z"]) ** 2)
+    differences.append(difference)
+    ax1.plot(fidimag_data["time"] * 1e9, difference, label=str(tol))
 
 
 ax2.plot(fidimag_data["time"] * 1e9, differences[1] - differences[0])
@@ -94,7 +90,7 @@ axis.plot(oommf_data[:, 0] * 1e9, oommf_data[:, 1], "r", label=olbl)
 
 for tol in fidimag_tols:
     fidimag_data = DataReader(FIDIMAG_DATAFILE.format(tol))
-    axis.plot(fidimag_data["time"] * 1e9, fidimag_data["rhs_evals"], label=flbl + "$\,{}$".format(tol))
+    axis.plot(fidimag_data["time"] * 1e9, fidimag_data["rhs_evals"], label=flbl + "$\,1e-{}$".format(tol))
 
 axis.legend()
 fig.savefig("work.png")
