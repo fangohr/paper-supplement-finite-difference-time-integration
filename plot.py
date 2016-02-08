@@ -13,11 +13,13 @@ plt.style.use("ggplot")
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 OOMMF_DATAFILE = os.path.join(MODULE_DIR, "oommf", "std_4_dynamics_field_2.txt")
 FIDIMAG_DATAFILES = sorted(glob.glob(os.path.join(MODULE_DIR, "fidimag", "dyn_r*_a*.txt")))
-oommf_data = np.loadtxt(OOMMF_DATAFILE)
 
 #FIXME: oommf magnetisation data is recorded between t = 4e-12 and t = 2.004e-9
 # whereas fidimag data is recorded between t = 0 and t = 2e-9 (as it should be)
-# that explains the slight discrepancy (?)
+oommf_original = np.loadtxt(OOMMF_DATAFILE)
+oommf_data = np.zeros(oommf_original.shape)
+oommf_data[1:] = oommf_original[:-1]
+# we have zeroes at t = 0 for oommf's data for now
 
 # LaTeX labels
 math = lambda txt: "$" + txt + "$"      # concatenation because getting {{{}}}
@@ -52,6 +54,7 @@ for fi in FIDIMAG_DATAFILES:
     # difference of average magnetisations between oommf and finmag
     axes[1].plot(data["time"] * 1e9, difference, label=str(tol))
     axes[1].set_ylabel("difference")
+    axes[1].set_ylim((0, 0.005))
 
     # number of RHS evaluations
     axes[2].plot(oommf_data[:, 0] * 1e9, oommf_data[:, 1], "r", label=olbl)
