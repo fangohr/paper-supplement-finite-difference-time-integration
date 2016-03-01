@@ -14,7 +14,7 @@ Specify Oxs_BoxAtlas:atlas {
 }
 
 Specify Oxs_RectangularMesh:mesh {
-  cellsize {1e-9 1e-9 1e-9}
+  cellsize {3.125e-9 3.125e-9 3e-9}
   atlas :atlas
 }
 

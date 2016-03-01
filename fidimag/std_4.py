@@ -44,10 +44,10 @@ def get_initial_state(mesh):
 
 def run_dynamics(mesh, initial_state, integrator_settings):
     if integrator_settings[0] == "sundials":
-        integrator, rtol, atol = integrator_settings
-        print "Simulation with sundials integrator, rtol={}, atol={}.".format(rtol, atol)
-        sim = setup_simulation(mesh, initial_state, "dyn_r{}_a{}".format(rtol, atol), integrator)
-        sim.set_tols(rtol=10**-rtol, atol=10**-atol)
+        integrator, tol, max_ord = integrator_settings
+        print "Simulation with sundials integrator, rtol, atol={}, q={}.".format(tol, max_ord)
+        sim = setup_simulation(mesh, initial_state, "dyn_t{}_q{}".format(tol, max_ord), integrator)
+        sim.set_tols(rtol=10**-tol, atol=10**-tol, max_ord=max_ord)
     else:
         integrator, stepsize = integrator_settings
         print "Simulation with {} integrator, stepsize={}.".format(integrator, stepsize)
@@ -63,7 +63,7 @@ def run_dynamics(mesh, initial_state, integrator_settings):
 
 
 def run(integrator_settings):
-    mesh = CuboidMesh(nx=500, ny=125, nz=3, dx=1, dy=1, dz=1, unit_length=1e-9)
+    mesh = CuboidMesh(nx=160, ny=40, nz=1, dx=3.125, dy=3.125, dz=3, unit_length=1e-9)
     try:
         m0 = np.load(M0_FILE)
     except IOError:
@@ -73,7 +73,8 @@ def run(integrator_settings):
     run_dynamics(mesh, m0, integrator_settings)
 
 if __name__ == "__main__":
-    for tol in xrange(5, 11):
-        run(("sundials", tol, tol))
+    max_ord = 2
+    for tol in xrange(4, 10):
+        run(("sundials", tol, max_ord))
     run(("euler", 1e-15))
     run(("rk4", 1e-15))
