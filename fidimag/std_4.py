@@ -20,8 +20,8 @@ alpha = 0.02
 gamma = 2.211e5
 
 
-def setup_simulation(mesh, m0, simulation_name, integrator="sundials"):
-    sim = Sim(mesh, name=simulation_name, integrator=integrator)
+def setup_simulation(mesh, m0, simulation_name, integrator="sundials", use_jac=False):
+    sim = Sim(mesh, name=simulation_name, integrator=integrator, use_jac)
     sim.set_m(m0)
     sim.Ms = Ms
     sim.alpha = alpha
@@ -44,9 +44,14 @@ def get_initial_state(mesh):
 
 def run_dynamics(mesh, initial_state, integrator_settings):
     if integrator_settings[0] == "sundials":
-        integrator, tol, max_ord = integrator_settings
-        print "Simulation with sundials integrator, rtol, atol={}, q={}.".format(tol, max_ord)
-        sim = setup_simulation(mesh, initial_state, "dyn_t{}_q{}".format(tol, max_ord), integrator)
+        integrator, tol, max_ord, use_jac = integrator_settings
+        jac_label = "_J" if use_jac else ""
+        print "Simulation with sundials integrator, rtol, atol={}, q={}, J={}.".format(tol, max_ord, use_jac)
+        sim = setup_simulation(mesh,
+                initial_state,
+                "dyn_t{}_q{}{}".format(tol, max_ord, use_jac),
+                integrator,
+                use_jac)
         sim.set_tols(rtol=10**-tol, atol=10**-tol, max_ord=max_ord)
     else:
         integrator, stepsize = integrator_settings
@@ -73,8 +78,9 @@ def run(integrator_settings):
     run_dynamics(mesh, m0, integrator_settings)
 
 if __name__ == "__main__":
-    max_ord = 2
-    for tol in xrange(4, 10):
-        run(("sundials", tol, max_ord))
-    run(("euler", 1e-15))
-    run(("rk4", 1e-15))
+    for use_jac in (False, True):
+        for max_ord in (2, 5):
+            for tol in (4, 6, 8):
+                run(("sundials", tol, max_ord, use_jac))
+    run(("euler", 1e-16))
+    run(("rk4", 1e-16))
